@@ -1,0 +1,792 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Interactive AI History Timeline</title>
+    <style>
+        :root {
+            --primary-color: #3498db;
+            --secondary-color: #2c3e50;
+            --accent-color: #e74c3c;
+            --light-color: #ecf0f1;
+            --dark-color: #34495e;
+            --highlight-color: #f39c12;
+            --success-color: #2ecc71;
+            --timeline-width: 6px;
+        }
+        
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+        }
+        
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            line-height: 1.6;
+            color: var(--dark-color);
+            background-color: #f5f7fa;
+            padding: 0;
+            overflow-x: hidden;
+        }
+        
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 20px;
+        }
+        
+        header {
+            text-align: center;
+            padding: 40px 0;
+            background: linear-gradient(135deg, var(--primary-color), var(--secondary-color));
+            color: white;
+            border-radius: 10px;
+            margin-bottom: 30px;
+            box-shadow: 0 4px 20px rgba(0, 0, 0, 0.1);
+        }
+        
+        header h1 {
+            font-size: 2.8rem;
+            margin-bottom: 15px;
+            font-weight: 700;
+        }
+        
+        header p {
+            font-size: 1.2rem;
+            max-width: 800px;
+            margin: 0 auto;
+            opacity: 0.9;
+        }
+        
+        .timeline {
+            position: relative;
+            max-width: 1200px;
+            margin: 40px auto;
+        }
+        
+        .timeline::after {
+            content: '';
+            position: absolute;
+            width: var(--timeline-width);
+            background-color: var(--primary-color);
+            top: 0;
+            bottom: 0;
+            left: 50%;
+            margin-left: calc(var(--timeline-width) / -2);
+            border-radius: 10px;
+        }
+        
+        .era {
+            padding: 30px 0;
+            position: relative;
+        }
+        
+        .era-header {
+            text-align: center;
+            margin-bottom: 30px;
+            z-index: 1;
+            position: relative;
+        }
+        
+        .era-title {
+            display: inline-block;
+            padding: 10px 25px;
+            background: var(--secondary-color);
+            color: white;
+            border-radius: 30px;
+            font-size: 1.2rem;
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+            cursor: pointer;
+            transition: all 0.3s ease;
+        }
+        
+        .era-title:hover {
+            transform: translateY(-3px);
+            box-shadow: 0 6px 15px rgba(0, 0, 0, 0.15);
+            background: var(--dark-color);
+        }
+        
+        .era-content {
+            display: none;
+            padding: 20px;
+            border-radius: 8px;
+            background-color: white;
+            box-shadow: 0 4px 15px rgba(0, 0, 0, 0.08);
+            margin: 20px auto 40px;
+            max-width: 80%;
+            position: relative;
+            z-index: 1;
+            transition: all 0.3s ease;
+        }
+        
+        .era-content.active {
+            display: block;
+            animation: fadeIn 0.5s ease-in;
+        }
+        
+        .milestone {
+            display: flex;
+            justify-content: flex-end;
+            padding: 10px 0;
+            position: relative;
+            width: 100%;
+            min-height: 150px;
+        }
+        
+        .milestone-indicator {
+            width: 25px;
+            height: 25px;
+            background-color: white;
+            border: 4px solid var(--primary-color);
+            border-radius: 50%;
+            z-index: 2;
+            position: absolute;
+            left: 50%;
+            margin-left: -12.5px;
+            transition: all 0.3s ease;
+        }
+        
+        .milestone:hover .milestone-indicator {
+            background-color: var(--highlight-color);
+            transform: scale(1.2);
+            box-shadow: 0 0 0 4px rgba(52, 152, 219, 0.3);
+        }
+        
+        .milestone:nth-child(odd) {
+            justify-content: flex-start;
+        }
+        
+        .milestone-card {
+            padding: 20px;
+            background-color: white;
+            border-radius: 8px;
+            box-shadow: 0 4px 15px rgba(0, 0, 0, 0.08);
+            width: 45%;
+            position: relative;
+            cursor: pointer;
+            transition: all 0.3s ease;
+        }
+        
+        .milestone-card:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 8px 20px rgba(0, 0, 0, 0.15);
+        }
+        
+        .milestone:nth-child(odd) .milestone-card::after {
+            content: '';
+            position: absolute;
+            border-width: 10px;
+            border-style: solid;
+            border-color: transparent transparent transparent white;
+            top: 20px;
+            right: -20px;
+        }
+        
+        .milestone:nth-child(even) .milestone-card::after {
+            content: '';
+            position: absolute;
+            border-width: 10px;
+            border-style: solid;
+            border-color: transparent white transparent transparent;
+            top: 20px;
+            left: -20px;
+        }
+        
+        .milestone-year {
+            display: inline-block;
+            padding: 5px 15px;
+            background-color: var(--primary-color);
+            color: white;
+            border-radius: 20px;
+            font-weight: bold;
+            margin-bottom: 10px;
+        }
+        
+        .milestone-title {
+            font-size: 1.2rem;
+            font-weight: bold;
+            margin-bottom: 10px;
+            color: var(--secondary-color);
+        }
+        
+        .milestone-fact {
+            background-color: var(--light-color);
+            padding: 15px;
+            border-radius: 8px;
+            margin-top: 10px;
+            position: relative;
+            display: none;
+        }
+        
+        .milestone-fact.active {
+            display: block;
+            animation: fadeIn 0.5s ease-in;
+        }
+        
+        .milestone-fact::before {
+            content: "Interesting Fact";
+            position: absolute;
+            top: -10px;
+            left: 15px;
+            background-color: var(--highlight-color);
+            color: white;
+            padding: 3px 10px;
+            border-radius: 10px;
+            font-size: 0.8rem;
+            font-weight: bold;
+        }
+        
+        @keyframes fadeIn {
+            from {
+                opacity: 0;
+                transform: translateY(10px);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+        
+        .back-to-top {
+            position: fixed;
+            bottom: 20px;
+            right: 20px;
+            background-color: var(--secondary-color);
+            color: white;
+            width: 50px;
+            height: 50px;
+            border-radius: 50%;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            cursor: pointer;
+            opacity: 0;
+            transition: all 0.3s ease;
+            z-index: 999;
+        }
+        
+        .back-to-top.visible {
+            opacity: 1;
+        }
+        
+        .back-to-top:hover {
+            background-color: var(--primary-color);
+            transform: translateY(-3px);
+        }
+        
+        @media screen and (max-width: 768px) {
+            .timeline::after {
+                left: 50px;
+            }
+            
+            .milestone {
+                justify-content: flex-start;
+                padding-left: 70px;
+            }
+            
+            .milestone-indicator {
+                left: 50px;
+            }
+            
+            .milestone-card {
+                width: 80%;
+            }
+            
+            .milestone:nth-child(even) .milestone-card::after,
+            .milestone:nth-child(odd) .milestone-card::after {
+                left: -20px;
+                border-color: transparent white transparent transparent;
+            }
+        }
+        
+        @media screen and (max-width: 480px) {
+            header h1 {
+                font-size: 2rem;
+            }
+            
+            .era-content {
+                max-width: 95%;
+            }
+            
+            .milestone-card {
+                width: 85%;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <header>
+            <h1>The Evolution of Artificial Intelligence</h1>
+            <p>Explore the fascinating journey of AI from its theoretical beginnings to modern breakthroughs. Click on eras and milestones to discover interesting facts about each development.</p>
+        </header>
+        
+        <div class="timeline">
+            <!-- Early Foundations -->
+            <div class="era">
+                <div class="era-header">
+                    <div class="era-title" onclick="toggleEra('early-foundations')">1940s-1950s: Early Foundations</div>
+                </div>
+                <div id="early-foundations" class="era-content">
+                    <p>The foundational period of AI saw the development of key theoretical concepts that would later enable practical AI applications. During this time, pioneering thinkers like Alan Turing, McCulloch, and Pitts laid the groundwork for what would eventually become a revolutionary field.</p>
+                    
+                    <div class="milestone">
+                        <div class="milestone-indicator"></div>
+                        <div class="milestone-card" onclick="toggleFact('mcculloch-pitts-fact')">
+                            <div class="milestone-year">1943</div>
+                            <div class="milestone-title">McCulloch and Pitts Neural Model</div>
+                            <p>Warren McCulloch and Walter Pitts publish "A Logical Calculus of the Ideas Immanent in Nervous Activity," proposing the first mathematical model of neural networks.</p>
+                            <div id="mcculloch-pitts-fact" class="milestone-fact">
+                                Their work on artificial neurons was inspired by the way biological neurons work. It laid the groundwork for what would eventually become the concept of artificial neural networks, which are the foundation of modern deep learning.
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <div class="milestone">
+                        <div class="milestone-indicator"></div>
+                        <div class="milestone-card" onclick="toggleFact('turing-test-fact')">
+                            <div class="milestone-year">1950</div>
+                            <div class="milestone-title">Turing Test Proposed</div>
+                            <p>Alan Turing publishes "Computing Machinery and Intelligence," introducing the Turing Test as a measure of machine intelligence.</p>
+                            <div id="turing-test-fact" class="milestone-fact">
+                                Alan Turing's idea of the Turing Test for evaluating machine intelligence is still considered one of the most thought-provoking discussions about AI's potential to mimic human behavior.
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <div class="milestone">
+                        <div class="milestone-indicator"></div>
+                        <div class="milestone-card" onclick="toggleFact('dartmouth-fact')">
+                            <div class="milestone-year">1956</div>
+                            <div class="milestone-title">Dartmouth Conference</div>
+                            <p>The Dartmouth Conference, organized by John McCarthy, Marvin Minsky, Claude Shannon, and Nathaniel Rochester, officially coins the term "Artificial Intelligence" as an academic field.</p>
+                            <div id="dartmouth-fact" class="milestone-fact">
+                                This conference is often considered the birth of AI as a formal field. Interestingly, it was initially meant to last only 6-8 weeks but sparked ongoing debates and developments that last to this day.
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <div class="milestone">
+                        <div class="milestone-indicator"></div>
+                        <div class="milestone-card" onclick="toggleFact('lisp-fact')">
+                            <div class="milestone-year">1958</div>
+                            <div class="milestone-title">LISP Programming Language</div>
+                            <p>John McCarthy creates LISP programming language at MIT, which becomes the dominant AI programming language for the next 30 years.</p>
+                            <div id="lisp-fact" class="milestone-fact">
+                                LISP, the programming language developed by John McCarthy, became one of the most influential in AI development. The Logic Theorist, considered the first AI program, proved mathematical theorems and was later described by Allen Newell as the first program to "think" like a human.
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            
+            <!-- 1960s-1970s -->
+            <div class="era">
+                <div class="era-header">
+                    <div class="era-title" onclick="toggleEra('early-ai')">1960s-1970s: Early AI and Symbolic Systems</div>
+                </div>
+                <div id="early-ai" class="era-content">
+                    <p>This period saw the first practical applications of AI concepts, including the development of early chatbots and expert systems. Researchers began to explore how machines could simulate human conversation and expertise.</p>
+                    
+                    <div class="milestone">
+                        <div class="milestone-indicator"></div>
+                        <div class="milestone-card" onclick="toggleFact('eliza-fact')">
+                            <div class="milestone-year">1965</div>
+                            <div class="milestone-title">ELIZA Chatbot</div>
+                            <p>Joseph Weizenbaum creates ELIZA at MIT, an early natural language processing program that simulated conversation.</p>
+                            <div id="eliza-fact" class="milestone-fact">
+                                The chatbot's famous "DOCTOR" script was so convincing that some users began to believe ELIZA could provide genuine psychological insight, demonstrating how easily people can anthropomorphize AI. In fact, some early users reportedly became emotionally invested in their conversations with ELIZA, unaware that they were talking to a machine!
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <div class="milestone">
+                        <div class="milestone-indicator"></div>
+                        <div class="milestone-card" onclick="toggleFact('shakey-fact')">
+                            <div class="milestone-year">1972</div>
+                            <div class="milestone-title">Shakey the Robot</div>
+                            <p>Stanford Research Institute develops Shakey, the first general-purpose mobile robot that could reason about its actions.</p>
+                            <div id="shakey-fact" class="milestone-fact">
+                                Shakey was groundbreaking not just for its ability to navigate and solve problems but because it was the first robot to combine perception, planning, and action, laying the foundations for modern robotics.
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <div class="milestone">
+                        <div class="milestone-indicator"></div>
+                        <div class="milestone-card" onclick="toggleFact('mycin-fact')">
+                            <div class="milestone-year">1970s</div>
+                            <div class="milestone-title">MYCIN Expert System</div>
+                            <p>MYCIN was developed at Stanford University as one of the first expert systems for medical diagnosis.</p>
+                            <div id="mycin-fact" class="milestone-fact">
+                                MYCIN was one of the first expert systems developed for medical diagnosis, designed to diagnose bacterial infections. Despite its accuracy, it was never put into practical use due to its inability to explain its reasoning in a way that doctors could trust.
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            
+            <!-- 1980s -->
+            <div class="era">
+                <div class="era-header">
+                    <div class="era-title" onclick="toggleEra('expert-systems')">1980s: Rise of Expert Systems</div>
+                </div>
+                <div id="expert-systems" class="era-content">
+                    <p>The 1980s saw significant commercial interest in AI, particularly in the form of expert systems designed to capture human expertise in specific domains. This period also saw advances in neural network research with the introduction of Hopfield Networks.</p>
+                    
+                    <div class="milestone">
+                        <div class="milestone-indicator"></div>
+                        <div class="milestone-card" onclick="toggleFact('xcon-fact')">
+                            <div class="milestone-year">1980s</div>
+                            <div class="milestone-title">Expert Systems Boom</div>
+                            <p>XCON expert system is deployed at Digital Equipment Corporation, becoming one of the first commercially successful AI systems.</p>
+                            <div id="xcon-fact" class="milestone-fact">
+                                In the 1980s, the rise of expert systems created huge commercial interest in AI, but one of the most interesting aspects was how these systems required massive rule-based knowledge bases. Their development was heavily influenced by advances in knowledge engineering and the work of systems like XCON for computer configuration.
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <div class="milestone">
+                        <div class="milestone-indicator"></div>
+                        <div class="milestone-card" onclick="toggleFact('hopfield-fact')">
+                            <div class="milestone-year">1982</div>
+                            <div class="milestone-title">Hopfield Networks</div>
+                            <p>John Hopfield presents the Hopfield Network, reviving interest in neural networks.</p>
+                            <div id="hopfield-fact" class="milestone-fact">
+                                Hopfield Networks, introduced by John Hopfield, helped demonstrate the potential of neural networks for solving optimization problems. They also marked the beginning of using AI for pattern recognition tasks.
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <div class="milestone">
+                        <div class="milestone-indicator"></div>
+                        <div class="milestone-card" onclick="toggleFact('ai-winter-fact')">
+                            <div class="milestone-year">1987-1993</div>
+                            <div class="milestone-title">AI Winter</div>
+                            <p>The collapse of the Lisp machine market and reduced funding leads to the "Second AI Winter."</p>
+                            <div id="ai-winter-fact" class="milestone-fact">
+                                The AI Winter occurred because the overhyped expectations failed to materialize. However, the work done during this period laid important groundwork for the later resurgence of AI, particularly in neural networks.
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            
+            <!-- 1990s -->
+            <div class="era">
+                <div class="era-header">
+                    <div class="era-title" onclick="toggleEra('machine-learning')">1990s: Machine Learning and the Internet Era</div>
+                </div>
+                <div id="machine-learning" class="era-content">
+                    <p>The 1990s saw machine learning emerge as a dominant approach in AI, with significant breakthroughs in areas like game playing and the beginnings of reinforcement learning. The growth of the internet also began to provide vast amounts of data for AI systems.</p>
+                    
+                    <div class="milestone">
+                        <div class="milestone-indicator"></div>
+                        <div class="milestone-card" onclick="toggleFact('deep-blue-fact')">
+                            <div class="milestone-year">1997</div>
+                            <div class="milestone-title">Deep Blue Defeats Kasparov</div>
+                            <p>IBM's Deep Blue defeats world chess champion Garry Kasparov, a landmark in AI defeating humans at intellectual tasks.</p>
+                            <div id="deep-blue-fact" class="milestone-fact">
+                                The game of chess was a battleground for human vs. machine intelligence. Deep Blue's victory over Garry Kasparov was a symbol of the growing capabilities of AI, but what made it fascinating was that Deep Blue's ability to process millions of moves per second proved more valuable than human intuition in a controlled environment.
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <div class="milestone">
+                        <div class="milestone-indicator"></div>
+                        <div class="milestone-card" onclick="toggleFact('reinforcement-fact')">
+                            <div class="milestone-year">1998</div>
+                            <div class="milestone-title">Reinforcement Learning</div>
+                            <p>Reinforcement Learning techniques gain prominence in AI research, particularly through the work of Richard Sutton.</p>
+                            <div id="reinforcement-fact" class="milestone-fact">
+                                Reinforcement Learning (RL) gained prominence thanks to Richard Sutton and his research, especially since it mimicked the way humans and animals learn through rewards and penalties—a concept that's key in developing autonomous systems like self-driving cars today.
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <div class="milestone">
+                        <div class="milestone-indicator"></div>
+                        <div class="milestone-card" onclick="toggleFact('ml-algorithms-fact')">
+                            <div class="milestone-year">1990s</div>
+                            <div class="milestone-title">ML Algorithms Advance</div>
+                            <p>Machine learning emerges as a dominant AI method, with the development of algorithms like decision trees and support vector machines.</p>
+                            <div id="ml-algorithms-fact" class="milestone-fact">
+                                The 1990s saw machine learning emerge as a dominant AI method, particularly with the rise of algorithms like decision trees and support vector machines (SVMs). These algorithms would go on to revolutionize applications like face recognition and speech processing.
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            
+            <!-- 2000s -->
+            <div class="era">
+                <div class="era-header">
+                    <div class="era-title" onclick="toggleEra('data-computation')">2000s: Data and Computational Power</div>
+                </div>
+                <div id="data-computation" class="era-content">
+                    <p>In this decade, AI benefited from increases in computing power and the explosion of available data. Consumer AI products began to enter the market, and deep learning research laid the groundwork for future breakthroughs.</p>
+                    
+                    <div class="milestone">
+                        <div class="milestone-indicator"></div>
+                        <div class="milestone-card" onclick="toggleFact('roomba-fact')">
+                            <div class="milestone-year">2002</div>
+                            <div class="milestone-title">Roomba Launch</div>
+                            <p>iRobot launches Roomba, one of the first mainstream consumer robots.</p>
+                            <div id="roomba-fact" class="milestone-fact">
+                                The Roomba, by iRobot, was one of the first robots to achieve commercial success in a mass consumer market. It helped introduce the idea of "smart" household gadgets to the mainstream, setting the stage for future AI-integrated home devices.
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <div class="milestone">
+                        <div class="milestone-indicator"></div>
+                        <div class="milestone-card" onclick="toggleFact('deep-learning-revival-fact')">
+                            <div class="milestone-year">2006</div>
+                            <div class="milestone-title">Deep Learning Revival</div>
+                            <p>Geoffrey Hinton introduces deep learning techniques with his paper on deep belief networks.</p>
+                            <div id="deep-learning-revival-fact" class="milestone-fact">
+                                The resurgence of deep learning in 2006, thanks to Geoffrey Hinton and others, made it clear that more layers (i.e., deeper networks) were the key to improving AI's performance. Deep learning is now the backbone of many modern AI systems, from voice assistants to self-driving cars.
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <div class="milestone">
+                        <div class="milestone-indicator"></div>
+                        <div class="milestone-card" onclick="toggleFact('big-data-fact')">
+                            <div class="milestone-year">2006-2010</div>
+                            <div class="milestone-title">Big Data Revolution</div>
+                            <p>The explosion of available data from online platforms and sensors provides machine learning algorithms with unprecedented training resources.</p>
+                            <div id="big-data-fact" class="milestone-fact">
+                                During this period, AI was turbocharged by "Big Data"—the explosion of information available from online platforms, mobile devices, and sensor networks, which allowed machine learning algorithms to improve at an unprecedented rate.
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            
+            <!-- 2010s -->
+            <div class="era">
+                <div class="era-header">
+                    <div class="era-title" onclick="toggleEra('deep-learning-era')">2010s: Deep Learning and AI Explosion</div>
+                </div>
+                <div id="deep-learning-era" class="era-content">
+                    <p>The 2010s marked a revolutionary period in AI development, with deep learning approaches achieving unprecedented success in various domains. AI systems began to match or exceed human performance in specific tasks, and ethical debates about AI's future became prominent.</p>
+                    
+                    <div class="milestone">
+                        <div class="milestone-indicator"></div>
+                        <div class="milestone-card" onclick="toggleFact('watson-fact')">
+                            <div class="milestone-year">2011</div>
+                            <div class="milestone-title">Watson Wins Jeopardy!</div>
+                            <p>IBM's Watson defeats champions Ken Jennings and Brad Rutter on Jeopardy!</p>
+                            <div id="watson-fact" class="milestone-fact">
+                                Watson's victory over Ken Jennings and Brad Rutter in Jeopardy! was a historic moment because it showcased AI's capacity to process natural language and access vast amounts of knowledge at lightning speed—an achievement that raised the bar for AI's potential in real-world applications.
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <div class="milestone">
+                        <div class="milestone-indicator"></div>
+                        <div class="milestone-card" onclick="toggleFact('alexnet-fact')">
+                            <div class="milestone-year">2012</div>
+                            <div class="milestone-title">AlexNet Wins ImageNet</div>
+                            <p>The "AlexNet" deep neural network dramatically improves image recognition in the ImageNet competition, marking the beginning of the deep learning revolution.</p>
+                            <div id="alexnet-fact" class="milestone-fact">
+                                AlexNet, a deep neural network, reduced the error rate in image classification by half compared to previous methods. It was also one of the first major AI successes to rely on powerful GPUs for accelerated computation.
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <div class="milestone">
+                        <div class="milestone-indicator"></div>
+                        <div class="milestone-card" onclick="toggleFact('alphago-fact')">
+                            <div class="milestone-year">2016</div>
+                            <div class="milestone-title">AlphaGo Defeats Lee Sedol</div>
+                            <p>AlphaGo defeats 18-time world champion Go player Lee Sedol.</p>
+                            <div id="alphago-fact" class="milestone-fact">
+                                The victory of AlphaGo over a human Go champion was a historic milestone because Go, with its immense complexity, was seen as a game beyond the reach of AI. The win was a triumph of deep learning, reinforcing the power of AI in mastering strategic decision-making.
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <div class="milestone">
+                        <div class="milestone-indicator"></div>
+                        <div class="milestone-card" onclick="toggleFact('ai-ethics-fact')">
+                            <div class="milestone-year">2015</div>
+                            <div class="milestone-title">AI Ethics Debate</div>
+                            <p>Experts like Elon Musk and Stephen Hawking raise concerns about AI's potential risks, sparking a global conversation on AI ethics.</p>
+                            <div id="ai-ethics-fact" class="milestone-fact">
+                                Experts like Elon Musk and Stephen Hawking raised concerns about AI's potential risks, especially regarding superintelligence. This sparked a global conversation on the ethical implications and safety measures needed to ensure AI benefits humanity.
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <div class="milestone">
+                        <div class="milestone-indicator"></div>
+                        <div class="milestone-card" onclick="toggleFact('alphago-zero-fact')">
+                            <div class="milestone-year">2017</div>
+                            <div class="milestone-title">AlphaGo Zero</div>
+                            <p>AlphaGo Zero achieves superhuman performance in Go by learning entirely through self-play, without human data.</p>
+                            <div id="alphago-zero-fact" class="milestone-fact">
+                                AlphaGo Zero was unique because it learned to play Go purely by playing against itself—without any human data—highlighting the potential of reinforcement learning to achieve human-level performance without prior knowledge.
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            
+            <!-- 2020s -->
+            <div class="era">
+                <div class="era-header">
+                    <div class="era-title" onclick="toggleEra('ai-everywhere')">2020s: AI Everywhere and Advanced Capabilities</div>
+                </div>
+                <div id="ai-everywhere" class="era-content">
+                    <p>The 2020s have seen AI become ubiquitous in everyday life, with large language models, generative AI, and multimodal capabilities transforming how people interact with technology. The period has been marked by unprecedented accessibility of advanced AI tools to the general public.</p>
+                    
+                    <div class="milestone">
+                        <div class="milestone-indicator"></div>
+                        <div class="milestone-card" onclick="toggleFact('gpt3-fact')">
+                            <div class="milestone-year">2020</div>
+                            <div class="milestone-title">GPT-3 Release</div>
+                            <p>OpenAI releases GPT-3, demonstrating unprecedented natural language capabilities.</p>
+                            <div id="gpt3-fact" class="milestone-fact">
+                                OpenAI's GPT-3 stunned the world with its ability to generate coherent and contextually appropriate text. It was trained on a vast amount of data and demonstrated AI's ability to not just assist but create original content, raising questions about creativity and authorship in the age of AI.
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <div class="milestone">
+                        <div class="milestone-indicator"></div>
+                        <div class="milestone-card" onclick="toggleFact('alphafold-fact')">
+                            <div class="milestone-year">2021</div>
+                            <div class="milestone-title">AlphaFold Breakthrough</div>
+                            <p>DeepMind's AlphaFold 2 achieves breakthrough protein structure prediction.</p>
+                            <div id="alphafold-fact" class="milestone-fact">
+                                AlphaFold's success in predicting the 3D structures of proteins was a groundbreaking achievement in biotechnology, with the potential to revolutionize drug discovery and disease understanding. It marked AI's growing influence in scientific research.
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <div class="milestone">
+                        <div class="milestone-indicator"></div>
+                        <div class="milestone-card" onclick="toggleFact('gpt4-fact')">
+                            <div class="milestone-year">2023</div>
+                            <div class="milestone-title">GPT-4 Multimodal</div>
+                            <p>GPT-4 is released with improved reasoning and multimodal capabilities.</p>
+                            <div id="gpt4-fact" class="milestone-fact">
+                                GPT-4's multimodal capabilities, allowing it to process both images and text, opened up a new frontier for AI. It could interpret and generate creative content in entirely new ways, from generating captions for images to solving complex problems across multiple domains.
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <div class="milestone">
+                        <div class="milestone-indicator"></div>
+                        <div class="milestone-card" onclick="toggleFact('generative-ai-fact')">
+                            <div class="milestone-year">2023</div>
+                            <div class="milestone-title">Generative AI Goes Mainstream</div>
+                            <p>ChatGPT and DALL·E bring generative AI to the masses, inspiring a new wave of creators and applications.</p>
+                            <div id="generative-ai-fact" class="milestone-fact">
+                                ChatGPT and DALL·E have made AI accessible to the masses, inspiring a new wave of creators, educators, and entrepreneurs who are experimenting with generative AI to produce everything from written content to visual art.
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            
+            <!-- Future -->
+            <div class="era">
+                <div class="era-header">
+                    <div class="era-title" onclick="toggleEra('future')">2025 and Beyond: Future Directions</div>
+                </div>
+                <div id="future" class="era-content">
+                    <p>The future of AI promises continued advancements in capabilities alongside growing emphasis on ethical development and governance. As AI becomes more integrated into society, questions about its role and impact will become increasingly important.</p>
+                    
+                    <div class="milestone">
+                        <div class="milestone-indicator"></div>
+                        <div class="milestone-card" onclick="toggleFact('future-ai-fact')">
+                            <div class="milestone-year">2025+</div>
+                            <div class="milestone-title">AI Ethics and AGI</div>
+                            <p>Focus shifts toward ensuring ethical development, transparency, and accountability as AI becomes more powerful and integrated into society.</p>
+                            <div id="future-ai-fact" class="milestone-fact">
+                                As AI becomes more powerful and integrated into society, the focus will shift toward ensuring ethical development, transparency, and accountability. The prospect of AGI (Artificial General Intelligence) continues to spark both excitement and concern for the future of humanity.
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <div class="back-to-top" onclick="scrollToTop()">↑</div>
+    
+    <script>
+        // Function to toggle era content
+        function toggleEra(eraId) {
+            const eraContent = document.getElementById(eraId);
+            
+            // Close all other era content
+            const allEraContent = document.querySelectorAll('.era-content');
+            allEraContent.forEach(content => {
+                if (content.id !== eraId) {
+                    content.classList.remove('active');
+                }
+            });
+            
+            // Toggle the clicked era content
+            eraContent.classList.toggle('active');
+            
+            // Scroll to the era content if it's now active
+            if (eraContent.classList.contains('active')) {
+                setTimeout(() => {
+                    eraContent.scrollIntoView({ behavior: 'smooth', block: 'start' });
+                }, 300);
+            }
+        }
+        
+        // Function to toggle milestone facts
+        function toggleFact(factId) {
+            const factElement = document.getElementById(factId);
+            
+            // Close all other facts in the same milestone
+            const milestone = factElement.closest('.milestone');
+            const allFacts = milestone.querySelectorAll('.milestone-fact');
+            
+            allFacts.forEach(fact => {
+                if (fact.id !== factId) {
+                    fact.classList.remove('active');
+                }
+            });
+            
+            // Toggle the clicked fact
+            factElement.classList.toggle('active');
+        }
+        
+        // Function to handle scrolling - show/hide back to top button
+        window.onscroll = function() {
+            const backToTop = document.querySelector('.back-to-top');
+            if (document.body.scrollTop > 500 || document.documentElement.scrollTop > 500) {
+                backToTop.classList.add('visible');
+            } else {
+                backToTop.classList.remove('visible');
+            }
+        };
+        
+        // Function to scroll to top
+        function scrollToTop() {
+            window.scrollTo({
+                top: 0,
+                behavior: 'smooth'
+            });
+        }
+        
+        // Auto open the first era on page load
+        window.onload = function() {
+            // Delay slightly to ensure page is loaded
+            setTimeout(() => {
+                toggleEra('early-foundations');
+            }, 500);
+        };
+    </script>
+</body>
+</html>
